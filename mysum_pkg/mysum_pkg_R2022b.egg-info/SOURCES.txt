@@ -1,8 +1,0 @@
-pyproject.toml
-setup.py
-mysum_pkg/__init__.py
-mysum_pkg/mysum_pkg.ctf
-mysum_pkg_R2022b.egg-info/PKG-INFO
-mysum_pkg_R2022b.egg-info/SOURCES.txt
-mysum_pkg_R2022b.egg-info/dependency_links.txt
-mysum_pkg_R2022b.egg-info/top_level.txt

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>QSM Direct App · Web UI</title>
+<style>
+:root{
+  --bg:#f7f7fb;--panel:#ffffff;--muted:#6b7280;--text:#0f172a;
+  --primary:#2563eb;--accent:#22c55e;--danger:#ef4444;--ring:rgba(37,99,235,.25);
+  --border:#e5e7eb;--shadow:0 10px 24px rgba(15,23,42,.06)
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"PingFang SC","Noto Sans SC","Microsoft Yahei",Arial}
+.wrap{max-width:1100px;margin:32px auto 80px;padding:0 16px}
+.h1{font-weight:800;font-size:28px;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+.badge{font-size:12px;background:#e0e7ff;color:#1e3a8a;padding:4px 8px;border-radius:999px;border:1px solid #c7d2fe}
+.grid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;margin-top:16px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+.card h3{margin:4px 0 12px;font-size:16px;color:#111827}
+label{font-size:12px;color:var(--muted);display:block;margin:10px 0 6px}
+select,input[type="text"],textarea,input[type="file"]{width:100%;background:#fff;border:1px solid var(--border);color:#0f172a;
+border-radius:10px;padding:10px 12px;outline:none;transition:all .2s}
+select:focus,input:focus,textarea:focus{box-shadow:0 0 0 4px var(--ring);border-color:var(--primary)}
+textarea{min-height:72px;resize:vertical}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);
+background:#eef2ff;color:#1e3a8a;cursor:pointer;user-select:none;transition:transform .08s,opacity .2s}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+.btn.success{background:#22c55e;color:#fff;border-color:#22c55e}
+.btn.danger{background:#ef4444;color:#fff;border-color:#ef4444}
+.help{color:var(--muted);font-size:12px}
+.status{white-space:pre-wrap;background:#fff;border:1px solid var(--border);padding:10px 12px;border-radius:10px;min-height:160px;max-height:360px;overflow:auto}
+@media (max-width:1050px){.grid{grid-template-columns:1fr}}
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kv .col{display:flex;flex-direction:column}
+.small{font-size:12px;color:#6b7280}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="h1">QSM Direct App <span class="badge">FastAPI + MCR</span></div>
+  <p class="help">选择两个文件夹（<code>path_mag</code> 与 <code>path_ph</code>），设置参数后执行；运行日志会实时显示，支持中途停止；完成后可下载 <code>out.zip</code>。</p>
+
+  <form id="qsmForm">
+    <div class="grid">
+      <div class="card">
+        <h3>数据上传（文件夹）</h3>
+
+        <label>选择 <b>path_mag</b> 文件夹</label>
+        <input id="magDir" type="file" webkitdirectory directory multiple />
+        <div class="help">将按每个文件的 <code>webkitRelativePath</code> 在后端还原目录结构。</div>
+
+        <label style="margin-top:12px">选择 <b>path_ph</b> 文件夹</label>
+        <input id="phDir" type="file" webkitdirectory directory multiple />
+
+        <div class="row" style="margin-top:12px">
+          <div class="small" id="magHint">未选择</div>
+          <div class="small" id="phHint" style="text-align:right">未选择</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>核心选项</h3>
+        <label>readout</label>
+        <select name="readout" id="readout">
+          <option value="unipolar" selected>unipolar</option>
+          <option value="bipolar">bipolar</option>
+        </select>
+
+        <label>ph_unwrap</label>
+        <select name="ph_unwrap" id="ph_unwrap">
+          <option value="bestpath" selected>bestpath</option>
+          <option value="laplacian">laplacian</option>
+          <option value="prelude">prelude</option>
+        </select>
+
+        <label>bkg_rm</label>
+        <select name="bkg_rm" id="bkg_rm">
+          <option value="resharp" selected>resharp</option>
+          <option value="lbv">lbv</option>
+          <option value="esharp">esharp</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>其他参数（独立输入框，留空使用默认）</h3>
+      <div class="kv">
+        <div class="col"><label>fit_thr</label><input name="fit_thr" type="text" placeholder="40" value="40" /></div>
+        <div class="col"><label>bet_thr</label><input name="bet_thr" type="text" placeholder="0.4" value="0.4" /></div>
+        <div class="col"><label>bet_smooth</label><input name="bet_smooth" type="text" placeholder="2" value="2" /></div>
+        <div class="col"><label>t_svd</label><input name="t_svd" type="text" placeholder="0.1" value="0.1" /></div>
+        <div class="col"><label>smv_rad</label><input name="smv_rad" type="text" placeholder="3" value="3" /></div>
+        <div class="col"><label>tik_reg</label><input name="tik_reg" type="text" placeholder="0.001" value="0.001" /></div>
+        <div class="col"><label>cgs_num</label><input name="cgs_num" type="text" placeholder="500" value="500" /></div>
+        <div class="col"><label>lbv_peel</label><input name="lbv_peel" type="text" placeholder="2" value="2" /></div>
+        <div class="col"><label>lbv_tol</label><input name="lbv_tol" type="text" placeholder="0.01" value="0.01" /></div>
+        <div class="col"><label>tv_reg</label><input name="tv_reg" type="text" placeholder="0.0005" value="0.0005" /></div>
+        <div class="col"><label>inv_num</label><input name="inv_num" type="text" placeholder="500" value="500" /></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>执行</h3>
+      <div class="row">
+        <button class="btn primary" id="btnRun" type="submit">▶️ 执行 QSM</button>
+        <button class="btn danger" id="btnStop" type="button" style="display:none">⏹ 停止</button>
+        <a class="btn success" id="btnDownload" href="#" download style="display:none">⬇️ 下载 out.zip</a>
+      </div>
+      <label style="margin-top:12px">状态</label>
+      <div class="status" id="status">尚未执行</div>
+    </div>
+  </form>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const statusEl   = $('#status');
+  const dlBtn      = $('#btnDownload');
+  const runBtn     = $('#btnRun');
+  const stopBtn    = $('#btnStop');
+  const magInput   = $('#magDir'), phInput = $('#phDir');
+  const magHint    = $('#magHint'), phHint = $('#phHint');
+
+  let currentSession = null;
+  let es = null;
+
+  function setStatus(msg){ statusEl.textContent = msg; }
+  function appendStatus(msg){
+    statusEl.textContent += "\n" + msg;
+    statusEl.scrollTop = statusEl.scrollHeight;
+  }
+  function countFiles(input){ return (input.files && input.files.length) ? input.files.length : 0; }
+  function setRunningUI(on){
+    runBtn.disabled = on;
+    stopBtn.style.display = on ? 'inline-flex' : 'none';
+    if (!on) currentSession = null;
+  }
+
+  magInput.addEventListener('change', () => {
+    magHint.textContent = countFiles(magInput) ? `已选择 ${countFiles(magInput)} 个文件` : '未选择';
+  });
+  phInput.addEventListener('change', () => {
+    phHint.textContent = countFiles(phInput) ? `已选择 ${countFiles(phInput)} 个文件` : '未选择';
+  });
+
+  function openLogStream(session_id){
+    if (es) { try{ es.close(); }catch{} es = null; }
+    es = new EventSource(`/api/log/${session_id}`);
+    es.onmessage = (ev) => { if (ev.data) appendStatus(ev.data); };
+    es.addEventListener('end', (ev) => {
+      const finalStatus = ev.data || '';
+      appendStatus(`\n[系统] 结束，状态：${finalStatus}`);
+      es.close(); es = null;
+      fetch(`/api/status/${session_id}`).then(r=>r.json()).then(j=>{
+        if (j.status === 'done' && j.download_url) {
+          dlBtn.href = j.download_url;
+          dlBtn.style.display = 'inline-flex';
+        } else if (j.status === 'error') {
+          appendStatus(`\n[错误] ${j.error||'未知错误'}`);
+        }
+        setRunningUI(false);
+      }).catch(()=> setRunningUI(false));
+    });
+    es.onerror = () => {/* 忽略瞬时错误，由服务器端结束事件收尾 */};
+  }
+
+  // 停止按钮
+  stopBtn.addEventListener('click', async () => {
+    if (!currentSession) return;
+    stopBtn.disabled = true;
+    try {
+      const res = await fetch(`/api/stop/${currentSession}`, { method: 'POST' });
+      const txt = await res.text();
+      appendStatus(`\n[系统] 已发送停止请求：${txt}`);
+    } catch (e) {
+      appendStatus(`\n[系统] 停止请求异常：${e.message}`);
+    } finally {
+      stopBtn.disabled = false;
+    }
+  });
+
+  // 提交表单：启动任务 + 打开日志流
+  document.getElementById('qsmForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!countFiles(magInput)) { alert('请先选择 path_mag 文件夹'); return; }
+    if (!countFiles(phInput))  { alert('请先选择 path_ph 文件夹');  return; }
+
+    setStatus('正在上传并启动任务…');
+    setRunningUI(true);
+    dlBtn.style.display = 'none'; dlBtn.href = '#';
+
+    try {
+      const fd = new FormData();
+      // 文件夹 A：mag
+      for (const f of Array.from(magInput.files || [])) {
+        fd.append('mag_files', f, f.name);
+        fd.append('mag_paths', f.webkitRelativePath || f.name);
+      }
+      // 文件夹 B：ph
+      for (const f of Array.from(phInput.files || [])) {
+        fd.append('ph_files', f, f.name);
+        fd.append('ph_paths', f.webkitRelativePath || f.name);
+      }
+      // 三个下拉
+      fd.append('readout',  $('#readout').value);
+      fd.append('ph_unwrap',$('#ph_unwrap').value);
+      fd.append('bkg_rm',   $('#bkg_rm').value);
+      // 其他参数
+      const keys = ['fit_thr','bet_thr','bet_smooth','t_svd','smv_rad','tik_reg',
+                    'cgs_num','lbv_peel','lbv_tol','tv_reg','inv_num'];
+      for (const k of keys) {
+        const v = (document.querySelector(`[name="${k}"]`)?.value || '').trim();
+        if (v !== '') fd.append(k, v);
+      }
+
+      // 启动
+      const res = await fetch(`/api/run_start`, { method:'POST', body: fd });
+      const txt = await res.text();
+      if (!res.ok) {
+        setStatus('启动失败：\n' + txt);
+        setRunningUI(false);
+        return;
+      }
+      const j = JSON.parse(txt);
+      currentSession = j.session_id;
+      appendStatus(`[系统] 已启动，会话 = ${currentSession}`);
+
+      // 打开日志流
+      openLogStream(currentSession);
+    } catch (e) {
+      setStatus('请求异常：' + e.message);
+      setRunningUI(false);
+    }
+  });
+})();
+</script>
+</body>
+</html>

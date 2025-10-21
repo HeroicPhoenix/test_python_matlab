@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/test_python_matlab.iml" filepath="$PROJECT_DIR$/.idea/test_python_matlab.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/python_matlab_app.iml" filepath="$PROJECT_DIR$/.idea/python_matlab_app.iml" />
     </modules>
   </component>
 </project>
